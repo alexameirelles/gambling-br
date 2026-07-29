@@ -1,0 +1,3237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scrollytelling map</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.26.0/mapbox-gl.css" rel="stylesheet">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.26.0/mapbox-gl.js"></script>
+
+
+<style>
+
+@font-face {
+  font-family: "Bodoni Moda";
+  src: url("fonts/Domine-VariableFont_wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Bodoni Moda";
+  src: url("fonts/Domine-Italic-VariableFont_wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: italic;
+}
+
+:root {
+  --bg-black: #070708;
+  --cream: #f6f1e6;
+
+  --yellow: #f8d66d;
+  --gold: #f2b632;
+  --orange: #e67e22;
+  --amber: #c96a10;
+
+  --chart-axis-text: #f6f1e6;
+  --chart-font: "Source Serif 4", Georgia, serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  font-family: "Source Serif 4", Georgia, serif;
+  background: var(--bg-black);
+  color: var(--cream);
+}
+
+/* ACCESSIBILITY */
+.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.skip-link{position:fixed;top:12px;left:12px;z-index:99999;padding:10px 14px;background:var(--cream);color:var(--bg-black);font-weight:700;text-decoration:none;transform:translateY(-160%);transition:transform .2s ease}
+.skip-link:focus{transform:translateY(0)}
+:focus-visible{outline:3px solid var(--yellow);outline-offset:4px}
+
+/* HERO */
+
+#hero {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  padding: 0 8vw;
+  background: var(--bg-black);
+}
+
+#hero-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  z-index: 0;
+}
+
+/* Escurece o vídeo */
+#hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(7, 7, 8, 0.88) 0%,
+      rgba(7, 7, 8, 0.62) 48%,
+      rgba(7, 7, 8, 0.28) 100%
+    );
+  pointer-events: none;
+}
+
+#hero-content {
+  position: relative;
+  z-index: 2;
+  width: min(800px, 100%);
+}
+
+#hero h1 {
+  max-width: 800px;
+  font-family: "Bodoni Moda", Georgia, serif;
+  font-size: clamp(1.5rem, 4.5vw, 5rem);
+  font-weight:500;
+  line-height: 1.03;
+  letter-spacing: -0.035em;
+  color: var(--cream);
+  text-shadow: 0 3px 24px rgba(0, 0, 0, 0.65);
+}
+
+#hero .byline {
+  margin-top: 2rem;
+  font-size: 1rem;
+  font-style: italic;
+  letter-spacing: 0.02em;
+  color: var(--yellow);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8);
+}
+
+/* ARTICLE */
+
+#body-text {
+  max-width: 850px;
+  margin: 0 auto;
+  padding: 7rem 6% 4rem;
+}
+
+#body-text p {
+  margin-bottom: 1.6rem;
+  font-size: 1.15rem;
+  line-height: 1.85;
+}
+
+#body-text .intro::first-letter {
+  float: left;
+  margin-top: 8px;
+  margin-right: 10px;
+  font-family: "Bodoni Moda", Georgia, serif;
+  font-size: 4.6rem;
+  font-weight: 700;
+  line-height: 0.7;
+}
+
+#body-text h2 {
+  margin: 3rem 0 1.2rem;
+  font-family: "Bodoni Moda", Georgia, serif;
+  font-size: 1.7rem;
+  color: var(--cream);
+}
+
+/* Waffle chart legend */
+
+.waffle-legend{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-top:20px;
+  color:#a9a9a9;
+  font-size:15px;
+}
+
+.waffle-legend-square{
+  width: 14px;
+  height: 14px;
+  background: #000;
+  border: 1.5px solid #fff;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+/* LINE CHART */
+
+.chart-block {
+  margin: 3rem 0;
+}
+
+.chart-header h3 {
+  font-family: "Bodoni Moda", Georgia, serif;
+  font-size: 1.45rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.chart-header {
+  margin-bottom: 0;
+}
+
+.chart-header .chart-cta {
+  font-size: 16px;
+  margin-top: 0.55rem !important;
+  margin-bottom: 0 !important;
+  color: rgba(244, 241, 234, 0.68) !important;
+}
+
+#line-chart {
+  margin-top: -10px;
+}
+
+.chart-note {
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  color: #999;
+}
+
+#line-chart-placeholder {
+  width: 100%;
+  min-height: 480px;
+  margin-top: 1rem;
+  display: grid;
+  place-items: center;
+  border: 1px dashed rgba(244, 241, 234, 0.28);
+  border-radius: 10px;
+  color: rgba(244, 241, 234, 0.55);
+  font-size: 0.95rem;
+}
+
+/* FULL-VIEWPORT SCROLLYTELLING */
+
+#scrolly {
+  position: relative;
+  width: 100%;
+  background: var(--bg-black);
+}
+
+#scrolly-map {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100svh;
+  z-index: 1;
+}
+
+#scrolly-steps {
+  position: relative;
+  z-index: 2;
+  margin-top: -100vh;
+  margin-top: -100svh;
+  padding-bottom: 100vh;
+  padding-bottom: 100svh;
+  pointer-events: none;
+}
+
+.scrolly-opening,
+.scrolly-step {
+  min-height: 100vh;
+  min-height: 100svh;
+}
+
+.scrolly-opening {
+  pointer-events: none;
+}
+
+.scrolly-step {
+  display: flex;
+  align-items: center;
+  padding: 10vh 6vw;
+  opacity: 0.35;
+  transition: opacity 0.55s ease;
+}
+
+.scrolly-step.active {
+  opacity: 1;
+}
+
+.step-card {
+  width: min(430px, 90vw);
+  padding: 1.5rem;
+  border: 1px solid rgba(244, 241, 234, 0.14);
+  background: rgba(7, 7, 8, 0.9);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.22);
+  pointer-events: auto;
+}
+
+.step-card h2 {
+  margin-bottom: 0.8rem;
+  font-family: "Bodoni Moda", Georgia, serif;
+  font-size: 1.8rem;
+  color: var(--cream);
+}
+
+.step-card p {
+  font-size: 1.08rem;
+  line-height: 1.7;
+  color: var(--cream);
+}
+
+
+/* MAP LEGEND */
+
+#map-legend {
+  position: fixed;
+  right: 32px;
+  top: 32px;
+  z-index: 16;
+  width: min(250px, calc(100vw - 32px));
+  padding: 12px 14px;
+  border: 1px solid rgba(246, 241, 230, 0.16);
+  background: rgba(7, 7, 8, 0.88);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: var(--cream);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
+}
+
+#map-legend.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.map-legend__title {
+  margin-bottom: 3px;
+  font-family: "Source Serif 4", Georgia, serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.map-legend__geography {
+  margin-bottom: 9px;
+  font-family: "Source Serif 4", Georgia, serif;
+  font-size: 11px;
+  line-height: 1.3;
+  color: rgba(246, 241, 230, 0.7);
+}
+
+.map-legend__gradient {
+  width: 100%;
+  height: 12px;
+  border: 1px solid rgba(246, 241, 230, 0.18);
+  border-radius: 2px;
+  background: linear-gradient(
+    to right,
+    #fffcf2 0%,
+    #fdf4d4 10%,
+    #fbe8ad 20%,
+    #f8d66d 30%,
+    #f5c24b 40%,
+    #f2b632 50%,
+    #ec9629 60%,
+    #de7420 70%,
+    #c96a10 80%,
+    #963f08 90%,
+    #5a2203 100%
+  );
+}
+
+.map-legend__labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+  font-family: Arial, sans-serif;
+  font-size: 10px;
+  color: rgba(246, 241, 230, 0.72);
+}
+
+.map-legend__zero {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-family: Arial, sans-serif;
+  font-size: 10px;
+  color: rgba(246, 241, 230, 0.72);
+}
+
+.map-legend__zero-swatch {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(246, 241, 230, 0.18);
+  border-radius: 2px;
+  background: #444444;
+}
+
+/* MAP TOOLTIP */
+
+.map-tooltip {
+  position: fixed;
+  z-index: 20;
+  display: none;
+  width: max-content;
+  max-width: 250px;
+  padding: 9px 11px;
+  border-radius: 5px;
+  background: #222;
+  color: white;
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.35;
+  pointer-events: none;
+}
+
+.map-tooltip::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  transform: translateY(-50%);
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+  border-right: 9px solid #222;
+}
+
+.map-tooltip--left::before {
+  right: auto;
+  left: 100%;
+  border-right: 0;
+  border-left: 9px solid #222;
+}
+
+.map-tooltip__state,
+.map-tooltip__value {
+  display: block;
+  font-weight: 700;
+}
+
+.map-tooltip__suffix {
+  margin-left: 4px;
+  font-weight: 400;
+}
+
+/* CALLOUT JARDIM PAULISTA */
+
+.jardim-callout {
+  display: flex;
+  align-items: flex-end;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease;
+}
+
+.jardim-callout.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.jardim-callout__box {
+  width: 340px;
+  padding: 1.2rem 1.35rem;
+  border-left: 4px solid #c96a10;
+  background: rgba(7, 7, 8, 0.94);
+  color: var(--cream);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
+  font-family: "Source Serif 4", Georgia, serif;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.jardim-callout__box strong {
+  color: #f2b632;
+}
+
+#map-callouts {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 8;
+  pointer-events: none;
+  overflow: visible;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.55s ease;
+}
+
+#map-callouts.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* QUOTE */
+
+.warning {
+  margin: 2.5rem 0;
+  padding: 1.5rem;
+  border-left: 5px solid #f2b632;
+  background: rgba(242, 182, 50, 0.08);
+  font-style: italic;
+  color: var(--cream);
+}
+
+/* FOOTER */
+
+footer {
+  padding: 3rem 5%;
+  text-align: center;
+  font-family: Georgia, serif;
+  font-size: 0.95rem;
+  color: white;
+}
+
+/* MOBILE */
+
+@media (max-width: 768px) {
+  #counter {
+    font-size: clamp(4.6rem, 24vw, 8rem);
+  }
+
+  #hero h1 {
+    font-size: clamp(2rem, 11vw, 3.4rem);
+  }
+
+  #body-text {
+    padding: 4rem 6% 3rem;
+  }
+
+  #body-text p {
+    font-size: 1rem;
+  }
+
+  #line-chart-placeholder {
+    min-height: 360px;
+  }
+
+  .scrolly-step {
+    align-items: flex-end;
+    padding: 0 1rem 8vh;
+  }
+
+  .step-card {
+    width: 100%;
+    background: rgba(7, 7, 8, 0.92);
+  }
+}
+
+@media (max-width: 768px) {
+  #map-legend {
+    right: 16px;
+    bottom: 16px;
+    width: 205px;
+    padding: 10px 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+
+</style>
+
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to main content</a>
+<main id="main-content">
+
+<section id="hero" aria-labelledby="story-title">
+
+  <video
+    id="hero-video"
+    autoplay
+    muted
+    loop
+    playsinline
+    preload="metadata"
+    aria-hidden="true"
+  >
+    <source src="gambling.mp4" type="video/mp4">
+  </video>
+
+  <div id="hero-content">
+    <h1 id="story-title">
+      Brazil averaged six outpatient visits per day for conditions associated with gambling addiction in 2025
+    </h1>
+
+    <div class="byline">
+      By Alexa Meirelles | July 28, 2026
+    </div>
+  </div>
+
+</section>
+
+<section id="body-text">
+
+<p class="intro">The 2026 World Cup has barely ended, and the tournament already leaves plenty to talk about. Between political undercurrents, controversial decisions, and a competition played under heavy international tension, it became a topic of conversation far beyond the pitch. In Brazil, what also grabbed attention was the role betting companies played throughout the entire competition and in the broadcast of the matches.</p>
+
+<p>Several studies suggest that betting has become woven into everyday life in Brazil, the fifth largest betting market in the world, according to the international consultancy Regulus Partners and reported by BBC News.</p>
+
+<p>Accounts of how gambling addiction can devastate people's health are not hard to find. Data from the Ministry of Health's Outpatient Information System (Sistema de Informações Ambulatoriais, SIA) show that the country recorded 7,443 outpatient visits between 2015 and 2025 in which the primary or associated diagnosis code was F63.0 — pathological gambling, also known as gambling disorder, an uncontrollable addiction to gambling and betting — or Z72.6, which refers to gambling and betting habits.</p> 
+
+<div class="chart-block" role="region" aria-labelledby="waffle-title" aria-describedby="waffle-summary">
+
+  <div class="chart-header">
+    <h3 id="waffle-title">71% of gambling-related outpatient visit records listed pathological gambling as the primary diagnosis between 2015 and 2025</h3>
+    <p class="chart-cta">
+      Hover over the squares to explore the data
+    </p>
+  </div>
+
+<div class="waffle-legend">
+  <div class="waffle-legend-square"></div>
+  <span>≈ 1% of the 7,443 gambling-related diagnostic entries</span>
+</div>
+
+  <p id="waffle-summary" class="sr-only">Waffle chart of 7,443 gambling-related diagnostic entries from 2015 through November 2025. F63.0 as the primary diagnosis accounts for 5,292 entries, or 71.1%. F63.0 as an associated cause accounts for 1,867 entries, or 25.1%. Z72.6 as the primary diagnosis accounts for 140 entries, or 1.9%. Z72.6 as an associated cause accounts for 144 entries, or 1.9%.</p>
+  <div id="diagnosis-waffle" aria-hidden="true"></div>
+
+  <div class="chart-note">
+    Notes: 1. Data for 2025 are available through November only. 2. There are no records in which both ICD codes appear together. | Source: Sistema de Informação Ambulatorial (SIA), DataSUS, Brazilian Ministry of Health.
+  </div>
+
+</div>
+
+<p>The number of cases has risen sharply in recent years. A decade ago, in 2015, just 100 cases were logged across the country. Between 2015 and 2020, the annual total never exceeded 200. Since then, the figure has climbed steadily, reaching 2,209 cases in 2025 through November alone.</p>
+
+<p>Hospitalizations, on the other hand, remain much lower. Still, the number was about 2.4 times higher last year than in 2019, the earliest year with records for these ICD codes. Data from Brazil's Hospital Information System (Sistema de Informações Hospitalares, SIH) show 59 hospitalizations in 2019, rising to a peak of 266 in 2024 before falling to 143 in 2025.</p>
+
+<div class="chart-block" role="region" aria-labelledby="line-chart-title" aria-describedby="line-chart-summary">
+  <div class="chart-header">
+    <h3 id="line-chart-title">Brazil recorded more than 22 times as many outpatient visits for gambling-related health issues in 2025 as it did a decade earlier</h3>
+    <p class="chart-cta">Hover over the line to see the data</p>
+  </div>
+
+  <p id="line-chart-summary" class="sr-only">Line chart comparing gambling-related outpatient visits and hospitalizations in Brazil. Outpatient visits rose from 100 in 2015 to 2,209 in 2025 through November. Hospitalizations were 59 in 2019, peaked at 266 in 2024, and were 143 in 2025. The chart also marks the legalization of sports betting in 2018 and regulation of the betting market in 2023.</p>
+  <div id="line-chart" aria-hidden="true"></div>
+
+  <div class="chart-note">
+    Note: Data for 2025 are available through November only. | Source: Sistema de Informação Ambulatorial (SIA) and Sistema de Informações Hospitalares (SIH), DataSUS, Brazilian Ministry of Health.
+  </div>
+</div>
+
+<p>The sports betting market was legalized in 2018, under the administration of former President Michel Temer (MDB), and rules for the sector were established in 2023 through Law No. 14,790/2023, under the current administration of President Lula (PT). It governs the fixed-odds betting market in Brazil, covering online games and virtual online casino games, while also setting rules for companies, taxation, and bettor protection.</p>
+
+<p>The market generated gross revenue of R$ 37 billion in 2025 alone, according to the Ministry of Finance's Secretariat of Prizes and Bets (Secretaria de Prêmios e Apostas do Ministério da Fazenda). Critics of the law, however, point to the social, financial, and health effects caused by the sector's rapid growth.</p>
+
+</section>
+
+<section id="scrolly" aria-labelledby="map-section-title">
+  <h2 id="map-section-title" class="sr-only">Geographic distribution of gambling-related outpatient visits</h2>
+  <p class="sr-only">The map is supplementary. The same findings appear in the chapter text: Brazil recorded 7,443 visits; Rondônia recorded 1,166; São Paulo state recorded 3,273; and most visits in São Paulo city were concentrated in Jardim Paulista.</p>
+  <div id="scrolly-map" aria-hidden="true" tabindex="-1"></div>
+<div id="map-tooltip" class="map-tooltip" role="tooltip" aria-hidden="true">
+  <span id="map-tooltip-state" class="map-tooltip__state"></span>
+  <span>
+    <span id="map-tooltip-value" class="map-tooltip__value" style="display:inline"></span>
+    <span id="map-tooltip-suffix" class="map-tooltip__suffix"></span>
+  </span>
+</div>
+
+<div id="map-legend" aria-hidden="true">
+  <div id="map-legend-title" class="map-legend__title">Outpatient visits</div>
+  <div id="map-legend-geography" class="map-legend__geography">By state</div>
+  <div class="map-legend__gradient" aria-hidden="true"></div>
+  <div class="map-legend__labels" aria-hidden="true">
+    <span>Lower</span>
+    <span>Higher</span>
+  </div>
+  <div class="map-legend__zero">
+    <span class="map-legend__zero-swatch" aria-hidden="true"></span>
+    <span>Zero or no recorded visits</span>
+  </div>
+</div>
+
+
+  <div id="scrolly-steps">
+    <section id="brasil" class="scrolly-opening scrolly-step">
+      <div class="step-card">
+        <p>
+          Between 2015 and 2025, Brazil recorded 7,443 outpatient visits for problems related to gambling addiction.</p>
+      </div>
+    </section>
+
+    <section id="rondonia" class="scrolly-step">
+  <div class="step-card">
+    <p>
+      Rondônia recorded 1,166 outpatient visits related to gambling
+      between 2015 and 2025, the second-highest total in the country.
+    </p>
+
+    <br>
+
+    <p>
+      This stands out because the state has a population of only about
+      1.6 million people, far smaller than that of São Paulo.
+    </p>
+  </div>
+</section>
+
+    <section id="estado-sp" class="scrolly-step">
+      <div class="step-card">
+        <p>
+          The state of São Paulo alone, which has the country's largest population (46 million), accounts for nearly 44% of all consultations, totalizing 3,273 cases in the 2015-2025 period.</p>
+      </div>
+    </section>
+
+    <section id="capital-sp" class="scrolly-step">
+      <div class="step-card">
+        <p>
+          The state capital accounted for the vast majority of cases, with a total of almost 72% of the state and 31% of the country. Nearly all of them took place in the Jardim Paulista neighborhood – more specifically, at the Hospital das Clínicas of the University of São Paulo Faculty of Medicine, according to the healthcare facility records.
+        </p>
+      </div>
+    </section>
+  </div>
+</section>
+
+<section id="body-text">
+  <h2>The numbers are underreported</h2>
+
+<p>Authorities acknowledge that these figures are underreported and that relatively few people seek in-person care. At the beginning of the year, Brazil's public health system (Sistema Único de Saúde, SUS) began offering remote mental health care for people experiencing problems related to gambling and betting, particularly online gambling. The service is free and can be accessed through the "Meu SUS Digital" app.</p>
+
+<p>In December last year, Brazil's Ministry of Finance launched the <a href="https://www.gov.br/fazenda/pt-br/composicao/orgaos/secretaria-de-premios-e-apostas/autoexclusao" style="color: #e67e22;">Centralized Self-Exclusion Platform</a>, which allows people to voluntarily block their access to authorized betting sites.
+
+The tool simultaneously blocks all active accounts on licensed betting platforms, prevents users from opening new accounts using the same taxpayer identification number (CPF), and stops betting companies from sending targeted advertising. The latest assessment, released in June, showed that nearly 700,000 people had used the tool.</p>
+
+<blockquote class="warning">
+  <strong>Warning:</strong> Gambling can lead to serious harms to health, including financial stress, relationship breakdown, family violence, mental illness and suicide. If you or someone you know is struggling with gambling, help is available. If you are experiencing suicidal thoughts, contact CVV (Centro de Valorização da Vida) at 188, available 24/7 by phone, or visit <a href="https://cvv.org.br" style="color: #e67e22;">cvv.org.br</a> for chat and email support.
+</blockquote>
+
+</section>
+
+</main>
+
+<footer>
+  <p>You can find more about the methodology and the code for this project on GitHub: github.com/alexameirelles</p>
+</footer>
+
+
+<script>
+
+/* DATA */
+
+const outpatientVisitsData = [
+  { year: 2015, value: 100 },
+  { year: 2016, value: 123 },
+  { year: 2017, value: 85 },
+  { year: 2018, value: 120 },
+  { year: 2019, value: 156 },
+  { year: 2020, value: 118 },
+  { year: 2021, value: 637 },
+  { year: 2022, value: 953 },
+  { year: 2023, value: 1479 },
+  { year: 2024, value: 1463 },
+  { year: 2025, value: 2209 }
+]
+
+const hospitalizationData = [
+  { year: 2019, value: 59 },
+  { year: 2020, value: 22 },
+  { year: 2021, value: 8 },
+  { year: 2022, value: 67 },
+  { year: 2023, value: 52 },
+  { year: 2024, value: 266 },
+  { year: 2025, value: 143 }
+];
+
+const waffleData = [
+  {
+    label: "F63.0 as primary diagnosis",
+    value: 5292,
+    percentage: 71.1,
+    squares: 71,
+    color: "#c96a10"
+  },
+  {
+    label: "F63.0 as associated cause",
+    value: 1867,
+    percentage: 25.1,
+    squares: 25,
+    color: "#e89a2e"
+  },
+  {
+    label: "Z72.6 as primary diagnosis",
+    value: 140,
+    percentage: 1.9,
+    squares: 2,
+    color: "#d2d2d1"
+  },
+  {
+    label: "Z72.6 as associated cause",
+    value: 144,
+    percentage: 1.9,
+    squares: 2,
+    color: "#d2d2d1"
+  }
+];
+
+const stateData = [
+  { uf: "AC", value: 5 },
+  { uf: "AL", value: 64 },
+  { uf: "AM", value: 41 },
+  { uf: "BA", value: 108 },
+  { uf: "CE", value: 108 },
+  { uf: "DF", value: 12 },
+  { uf: "ES", value: 7 },
+  { uf: "GO", value: 181 },
+  { uf: "MA", value: 80 },
+  { uf: "MG", value: 520 },
+  { uf: "MS", value: 98 },
+  { uf: "MT", value: 71 },
+  { uf: "PA", value: 98 },
+  { uf: "PB", value: 136 },
+  { uf: "PE", value: 233 },
+  { uf: "PI", value: 109 },
+  { uf: "PR", value: 267 },
+  { uf: "RJ", value: 95 },
+  { uf: "RN", value: 9 },
+  { uf: "RO", value: 1166 },
+  { uf: "RR", value: 8 },
+  { uf: "RS", value: 434 },
+  { uf: "SC", value: 247 },
+  { uf: "SE", value: 21 },
+  { uf: "SP", value: 3273 },
+  { uf: "TO", value: 52 }
+];
+
+const districtNames = {
+  "CACHOEIRINHA": "Cachoeirinha",
+  "PIRITUBA": "Pirituba",
+  "PARI": "Pari",
+  "SE": "Sé",
+  "BELA VISTA": "Bela Vista",
+  "JARDIM PAULISTA": "Jardim Paulista",
+  "CAPAO REDONDO": "Capão Redondo",
+  "JARDIM ANGELA": "Jardim Ângela",
+  "PARELHEIROS": "Parelheiros",
+  "GRAJAU": "Grajaú",
+  "PEDREIRA": "Pedreira",
+  "JABAQUARA": "Jabaquara",
+  "SACOMA": "Sacomã",
+  "IPIRANGA": "Ipiranga",
+  "VILA PRUDENTE": "Vila Prudente",
+  "SAPOPEMBA": "Sapopemba",
+  "CARRAO": "Carrão",
+  "ERMELINO MATARAZZO": "Ermelino Matarazzo",
+  "ITAIM PAULISTA": "Itaim Paulista"
+};
+
+/* LINE CHART */
+
+const chartWidth = 760;
+const chartHeight = 470;
+const margin = { top: 80, right: 20, bottom: 40, left: 60 };
+
+const width = chartWidth - margin.left - margin.right;
+const height = chartHeight - margin.top - margin.bottom;
+
+const svg = d3.select("#line-chart")
+  .append("svg")
+  .attr("aria-hidden", "true")
+  .attr("focusable", "false")
+  .attr("viewBox", `0 0 ${chartWidth} ${chartHeight}`)
+  .style("width", "100%")
+  .style("height", "auto");
+
+const g = svg.append("g")
+  .attr("transform", `translate(${margin.left},${margin.top})`);
+
+const x = d3.scaleLinear()
+  .domain([2014.7, 2025.3])
+  .range([0, width]);
+
+const y = d3.scaleLinear()
+  .domain([0, d3.max(outpatientVisitsData, d => d.value) * 1.1])
+  .nice()
+  .range([height, 0]);
+
+// eixo X
+g.append("g")
+  .attr("transform", `translate(0,${height})`)
+  .call(
+    d3.axisBottom(x)
+      .tickFormat(d3.format("d"))
+      .tickValues(outpatientVisitsData.map(d => d.year))
+      .tickSize(0)
+  )
+  .call(g => g.selectAll("line").remove())
+  .call(g => g.selectAll("text")
+    .attr("fill", "#f6f1e6")
+    .attr("dy", "1.2em")
+    .style("font-size", "16px"));
+
+// eixo Y
+g.append("g")
+  .call(
+    d3.axisLeft(y)
+      .ticks(5)
+      .tickFormat(d3.format(","))
+      .tickSize(0)
+  )
+  .call(g => g.selectAll("line")
+    .attr("stroke", "#444"))
+  .call(g => g.selectAll("text")
+    .attr("fill", "#f6f1e6")
+    .attr("dx", "-0.4em")
+    .style("font-size", "16px"));
+
+// linha
+const line = d3.line()
+  .x(d => x(d.year))
+  .y(d => y(d.value));
+
+const path = g.append("path")
+  .datum(outpatientVisitsData)
+  .attr("fill", "none")
+  .attr("stroke", "var(--orange)")
+  .attr("stroke-width", 3)
+  .attr("d", line);
+
+const hospitalizationPath = g.append("path")
+  .datum(hospitalizationData)
+  .attr("fill", "none")
+  .attr("stroke", "var(--yellow)")
+  .attr("stroke-width", 3)
+  .attr("d", line);
+
+
+// pontos
+const dots = g.selectAll("circle")
+  .data(outpatientVisitsData)
+  .join("circle")
+  .attr("cx", d => x(d.year))
+  .attr("cy", d => y(d.value))
+  .attr("r", 3)
+  .attr("fill", "var(--orange)")
+  .attr("stroke", "var(--orange)")
+  .attr("stroke-width", 2);
+
+const hospitalizationDots = g.selectAll(".hospital-dot")
+  .data(hospitalizationData)
+  .join("circle")
+  .attr("class", "hospital-dot")
+  .attr("cx", d => x(d.year))
+  .attr("cy", d => y(d.value))
+  .attr("r", 3)
+  .attr("fill", "var(--yellow)")
+  .attr("stroke", "var(--yellow)")
+  .attr("stroke-width", 2)
+
+
+// estado inicial da animação do gráfico
+const pathLength = path.node().getTotalLength();
+const hospitalLength = hospitalizationPath.node().getTotalLength();
+
+path
+  .attr("stroke-dasharray", pathLength)
+  .attr("stroke-dashoffset", pathLength);
+
+hospitalizationPath
+  .attr("stroke-dasharray", hospitalLength)
+  .attr("stroke-dashoffset", hospitalLength);
+
+dots.attr("opacity", 0);
+hospitalizationDots.attr("opacity", 0);
+
+// legend
+
+const legend = svg.append("g")
+  .attr("transform", `translate(${margin.left}, 38)`);
+
+legend.append("circle")
+  .attr("cx", -50)
+  .attr("cy", 5)
+  .attr("r", 6)
+  .attr("fill", "var(--orange)");
+
+legend.append("text")
+  .attr("x", -35)
+  .attr("y", 10)
+  .text("Outpatient visits")
+  .attr("fill", "var(--cream)")
+  .attr("font-size", "15px");
+
+legend.append("circle")
+  .attr("cx", 120)
+  .attr("cy", 5)
+  .attr("r", 6)
+  .attr("fill", "var(--yellow)");
+
+legend.append("text")
+  .attr("x", 135)
+  .attr("y", 10)
+  .text("Hospitalizations")
+  .attr("fill", "var(--cream)")
+  .attr("font-size", "15px");
+
+// tooltip
+const tooltip = d3.select("body")
+  .append("div")
+  .style("position", "absolute")
+  .style("background", "#222")
+  .style("color", "#fff")
+  .style("padding", "6px 10px")
+  .style("border-radius", "4px")
+  .style("font-size", "13px")
+  .style("pointer-events", "none")
+  .style("display", "none");
+
+const waffleTooltip = d3.select("body")
+  .append("div")
+  .attr("class", "waffle-tooltip")
+  .style("position", "fixed")
+  .style("z-index", "9999")
+  .style("display", "none")
+  .style("max-width", "250px")
+  .style("padding", "9px 11px")
+  .style("border-radius", "5px")
+  .style("background", "#222")
+  .style("color", "#fff")
+  .style("font-family", "Georgia")
+  .style("font-size", "13px")
+  .style("line-height", "1.35")
+  .style("box-shadow", "0 8px 24px rgba(0, 0, 0, 0.35)")
+  .style("pointer-events", "none");
+
+dots  
+  .on("mouseenter", (event, d) => {
+    tooltip
+      .style("display", "block")
+      .html(`<strong>${d.year}</strong><br>${d.value.toLocaleString()} visits`);
+  })
+  .on("mousemove", event => {
+    tooltip
+      .style("left", `${event.pageX + 12}px`)
+      .style("top", `${event.pageY - 28}px`);
+  })
+  .on("mouseleave", () => {
+    tooltip.style("display", "none");
+  });
+
+const stateValueMap = new Map(
+  stateData.map(d => [d.uf, d.value])
+);
+
+hospitalizationDots
+  .on("mouseenter", (event, d) => {
+    tooltip
+      .style("display", "block")
+      .html(
+        `<strong>${d.year}</strong><br>${d.value.toLocaleString("en-US")} hospitalizations`
+      );
+  })
+  .on("mousemove", event => {
+    tooltip
+      .style("left", `${event.pageX + 12}px`)
+      .style("top", `${event.pageY - 28}px`);
+  })
+  .on("mouseleave", () => {
+    tooltip.style("display", "none");
+  });
+
+// últimos valores — começam invisíveis e aparecem com o restante do gráfico
+const lastPoint = outpatientVisitsData[outpatientVisitsData.length - 1];
+
+const lastPointLabel = g.append("text")
+  .attr("x", x(lastPoint.year))
+  .attr("y", y(lastPoint.value) - 16)
+  .attr("text-anchor", "middle")
+  .attr("fill", "white")
+  .attr("font-family", "Source Serif 4, Georgia, serif")
+  .attr("font-size", "18px")
+  .attr("font-weight", 700)
+  .attr("opacity", 0)
+  .text(lastPoint.value.toLocaleString("en-US"));
+
+const lastHospital = hospitalizationData[hospitalizationData.length - 1];
+
+const lastHospitalLabel = g.append("text")
+  .attr("x", x(lastHospital.year))
+  .attr("y", y(lastHospital.value) - 16)
+  .attr("text-anchor", "middle")
+  .attr("fill", "white")
+  .attr("font-family", "Source Serif 4, Georgia, serif")
+  .attr("font-size", "18px")
+  .attr("font-weight", 700)
+  .attr("opacity", 0)
+  .text(lastHospital.value.toLocaleString("en-US"));
+
+// annotations de 2018 e 2023
+const annotationsData = [
+  {
+    year: 2018,
+    lines: [
+      "Brazil legalizes sports",
+      "betting under Law",
+      "No. 13,756/2018"
+    ],
+    textOffsetX: -50,
+    textOffsetY: -90,
+    lineEndY: -50
+  },
+  {
+    year: 2023,
+    lines: [
+      "Brazil regulates the",
+      "betting market under",
+      "Law No. 14,790/2023" 
+    ],
+    textOffsetX: -60,
+    textOffsetY: -80,
+    lineEndY: -40
+  }
+];
+
+annotationsData.forEach((annotationConfig, index) => {
+  const dataPoint = outpatientVisitsData.find(
+    d => d.year === annotationConfig.year
+  );
+
+  // evita erro caso o ano não exista nos dados
+  if (!dataPoint) return;
+
+  const annotationX = x(dataPoint.year);
+  const annotationY = y(dataPoint.value);
+
+  const annotation = g.append("g")
+    .attr("class", `chart-annotation annotation-${annotationConfig.year}`)
+    .attr("pointer-events", "none")
+    .attr("opacity", 0);
+
+  // linha que conecta o texto ao ponto
+  annotation.append("line")
+    .attr("x1", annotationX)
+    .attr("y1", annotationY - 5)
+    .attr("x2", annotationX)
+    .attr("y2", annotationY + annotationConfig.lineEndY)
+    .attr("stroke", "var(--orange)")
+    .attr("stroke-width", 2);
+
+  // círculo no ponto
+  annotation.append("circle")
+    .attr("cx", annotationX)
+    .attr("cy", annotationY)
+    .attr("r", 5)
+    .attr("fill", "var(--orange)");
+
+  // texto
+  const annotationText = annotation.append("text")
+    .attr("x", annotationX + annotationConfig.textOffsetX)
+    .attr("y", annotationY + annotationConfig.textOffsetY)
+    .attr("text-anchor", "start")
+    .attr("fill", "var(--cream)")
+    .attr("font-size", "13px");
+
+  annotationConfig.lines.forEach((line, lineIndex) => {
+    annotationText.append("tspan")
+      .attr("x", annotationX + annotationConfig.textOffsetX)
+      .attr("dy", lineIndex === 0 ? 0 : "1.25em")
+      .attr("font-weight", lineIndex === 0 ? 700 : 400)
+      .text(line);
+  });
+
+});
+
+function animateLineChart() {
+  path
+    .transition()
+    .duration(1100)
+    .ease(d3.easeCubicOut)
+    .attr("stroke-dashoffset", 0);
+
+  hospitalizationPath
+    .transition()
+    .duration(1100)
+    .ease(d3.easeCubicOut)
+    .attr("stroke-dashoffset", 0);
+
+  dots
+    .transition()
+    .delay((_, i) => 700 + i * 25)
+    .duration(250)
+    .attr("opacity", 1);
+
+  hospitalizationDots
+    .transition()
+    .delay((_, i) => 700 + i * 25)
+    .duration(250)
+    .attr("opacity", 1);
+
+  lastPointLabel
+    .transition()
+    .delay(1050)
+    .duration(300)
+    .attr("opacity", 1);
+
+  lastHospitalLabel
+    .transition()
+    .delay(1050)
+    .duration(300)
+    .attr("opacity", 1);
+
+  g.selectAll(".chart-annotation")
+    .transition()
+    .delay((_, i) => 1200 + i * 180)
+    .duration(350)
+    .attr("opacity", 1);
+}
+
+const lineChartElement = document.querySelector("#line-chart");
+
+const lineChartObserver = new IntersectionObserver(
+  (entries, observer) => {
+    const entry = entries[0];
+
+    if (!entry.isIntersecting) return;
+
+    animateLineChart();
+    observer.disconnect();
+  },
+  {
+    threshold: 0.35
+  }
+);
+
+lineChartObserver.observe(lineChartElement);
+
+/* Waffle chart */
+
+const waffleSquares = [];
+
+waffleData.forEach((category, categoryIndex) => {
+  for (let i = 0; i < category.squares; i++) {
+    waffleSquares.push({
+      ...category,
+      categoryIndex
+    });
+  }
+});
+
+const squareSize = 24;
+const gap = 3;
+const columns = 10;
+const rows = 10;
+const gridStep = squareSize + gap;
+const waffleSize =
+  columns * squareSize + (columns - 1) * gap;
+
+/*
+  Extra space around the waffle is used by the outlines,
+  connector paths, and annotation text.
+*/
+const waffleShiftX = 45;
+
+const waffleMargin = {
+  top: 32,
+  right: 190 - waffleShiftX,
+  bottom: 32,
+  left: 190 + waffleShiftX
+};
+
+const waffleX = waffleMargin.left - 170;
+
+const waffleCanvasWidth =
+  waffleMargin.left + waffleSize + waffleMargin.right;
+
+const waffleCanvasHeight =
+  waffleMargin.top + waffleSize + waffleMargin.bottom;
+
+const waffleSvg = d3
+  .select("#diagnosis-waffle")
+  .append("svg")
+  .attr("aria-hidden", "true")
+  .attr("focusable", "false")
+  .attr(
+    "viewBox",
+    `0 0 ${waffleCanvasWidth} ${waffleCanvasHeight}`
+  )
+  .attr(
+    "aria-label",
+    "Waffle chart showing the share of gambling-related diagnostic entries by ICD code and diagnostic position."
+  )
+  .style("width", "100%")
+  .style("max-width", "680px")
+  .style("display", "block")
+  .style("margin", "36px auto 0")
+  .style("overflow", "visible");
+
+const waffleGroup = waffleSvg
+  .append("g")
+  .attr(
+    "transform",
+    `translate(${waffleX},${waffleMargin.top})`
+  );
+
+const squares = waffleGroup
+  .selectAll("rect")
+  .data(waffleSquares)
+  .join("rect")
+  .attr("x", (_, i) => (i % columns) * gridStep)
+  .attr(
+    "y",
+    (_, i) =>
+      (rows - 1 - Math.floor(i / columns)) * gridStep
+  )
+  .attr("width", squareSize)
+  .attr("height", squareSize)
+  .attr("fill", d => d.color)
+  // Disable interaction until every square has finished appearing.
+  .style("pointer-events", "none")
+  .style("cursor", "default");
+
+/*
+  Hover interaction for every waffle category.
+  The selected category stays fully visible while all others fade.
+*/
+squares
+  .style("cursor", "pointer")
+  .on("pointerenter", (event, hoveredSquare) => {
+    const activeCategory =
+      hoveredSquare.categoryIndex;
+
+    squares
+      .interrupt()
+      .style("transition", "opacity 180ms ease, stroke 180ms ease")
+      .attr(
+        "opacity",
+        square =>
+          square.categoryIndex === activeCategory
+            ? 1
+            : 0.18
+      )
+      .attr(
+        "stroke",
+        square =>
+          square.categoryIndex === activeCategory
+            ? "#f6f1e6"
+            : "none"
+      )
+      .attr(
+        "stroke-width",
+        square =>
+          square.categoryIndex === activeCategory
+            ? 1.25
+            : 0
+      );
+
+    waffleTooltip
+      .style("display", "block")
+      .html(
+        `<strong>${hoveredSquare.percentage.toFixed(1)}%</strong><br>` +
+        `${hoveredSquare.label}<br>` +
+        `${hoveredSquare.value.toLocaleString("en-US")} diagnostic entries`
+      );
+  })
+  .on("pointermove", event => {
+    const tooltipNode =
+      waffleTooltip.node();
+
+    const tooltipWidth =
+      tooltipNode?.offsetWidth ?? 0;
+
+    const tooltipHeight =
+      tooltipNode?.offsetHeight ?? 0;
+
+    let left = event.clientX + 14;
+    let top = event.clientY - tooltipHeight / 2;
+
+    if (
+      left + tooltipWidth >
+      window.innerWidth - 12
+    ) {
+      left =
+        event.clientX -
+        tooltipWidth -
+        14;
+    }
+
+    top = Math.max(
+      12,
+      Math.min(
+        top,
+        window.innerHeight -
+        tooltipHeight -
+        12
+      )
+    );
+
+    waffleTooltip
+      .style("left", `${left}px`)
+      .style("top", `${top}px`);
+  })
+  .on("pointerleave", () => {
+    squares
+      .interrupt()
+      .style("transition", "opacity 220ms ease, stroke 220ms ease")
+      .attr("opacity", 1)
+      .attr("stroke", "none")
+      .attr("stroke-width", 0);
+
+    waffleTooltip
+      .style("display", "none");
+  });
+
+const waffleEntranceTransition = squares
+  .attr("opacity", 0)
+  .attr("transform", (_, i) => {
+    const x =
+      (i % columns) * gridStep + squareSize / 2;
+
+    const y =
+      (rows - 1 - Math.floor(i / columns)) * gridStep +
+      squareSize / 2;
+
+    return `translate(${x},${y}) scale(0) translate(${-x},${-y})`;
+  })
+  .transition()
+  .delay((_, i) => i * 18)
+  .duration(260)
+  .ease(d3.easeCubicOut)
+  .attr("opacity", 1)
+  .attr("transform", null);
+
+/*
+  Enable hover only after the final square has completed its
+  entrance transition. This prevents hover from interrupting the
+  animation and leaving the waffle partially rendered.
+*/
+waffleEntranceTransition
+  .end()
+  .then(() => {
+    squares
+      .style("pointer-events", "all")
+      .style("cursor", "pointer");
+  })
+  .catch(() => {
+    // Keep the chart usable even if a browser interrupts the transition.
+    squares
+      .attr("opacity", 1)
+      .attr("transform", null)
+      .style("pointer-events", "all")
+      .style("cursor", "pointer");
+  });
+
+const categoryCells = d3.group(
+  waffleSquares.map((d, i) => ({
+    ...d,
+    x: (i % columns) * gridStep,
+    y:
+      (rows - 1 - Math.floor(i / columns)) *
+      gridStep
+  })),
+  d => d.categoryIndex
+);
+
+function getCategoryBounds(categoryIndex) {
+  const cells = categoryCells.get(categoryIndex);
+
+  return {
+    minX: d3.min(cells, d => d.x) - gap / 2,
+    maxX:
+      d3.max(cells, d => d.x) +
+      squareSize +
+      gap / 2,
+    minY: d3.min(cells, d => d.y) - gap / 2,
+    maxY:
+      d3.max(cells, d => d.y) +
+      squareSize +
+      gap / 2
+  };
+}
+
+const annotationSettings = [
+  {
+    categoryIndex: 0,
+    side: "right",
+    lineEndX: waffleCanvasWidth - 95 + waffleShiftX,
+    textX: waffleCanvasWidth - 85 + waffleShiftX,
+    textY: waffleCanvasHeight - 115,
+    percentage: "71%",
+    lines: ["of the records have", "F63.0 as primary diagnosis"]
+  },
+  {
+    categoryIndex: 1,
+    side: "right",
+    lineEndX: waffleCanvasWidth - 95 + waffleShiftX,
+    textX: waffleCanvasWidth - 85 + waffleShiftX,
+    textY: 80,
+    percentage: "25%",
+    lines: ["of the records have", "F63.0 as associated cause"]
+  }
+];
+
+annotationSettings.forEach((config, index) => {
+  const category = waffleData[config.categoryIndex];
+  const bounds = getCategoryBounds(config.categoryIndex);
+
+  const annotationGroup = waffleSvg
+  .append("g")
+  .attr("class", "waffle-annotation")
+  .attr("transform", "translate(-170, 0)");
+
+  const startX =
+    waffleMargin.left +
+    (config.side === "left"
+      ? bounds.minX
+      : bounds.maxX);
+
+  const startY =
+    waffleMargin.top +
+    (bounds.minY + bounds.maxY) / 2 +
+    (config.categoryIndex === 0 ? 13 : 0);
+
+  const endX = config.lineEndX;
+
+  const endY = config.textY - 12;
+
+  const elbowX =
+    config.side === "left"
+      ? startX - 24
+      : startX + 24;
+
+let path;
+let dotX;
+let dotY;
+
+if (config.categoryIndex === 0) {
+  // 71% — linha reta para a direita
+  path = `
+    M${startX},${startY}
+    L${endX},${startY}
+  `;
+
+  dotX = endX;
+  dotY = startY;
+
+} else {
+  // 25% — linha reta para a direita
+  path = `
+    M${startX},${startY}
+    L${endX},${startY}
+  `;
+
+  dotX = endX;
+  dotY = startY;
+}
+
+annotationGroup
+  .append("circle")
+  .attr("cx", dotX)
+  .attr("cy", dotY)
+  .attr("r", 2.5)
+  .attr("fill", category.color)
+  .attr("opacity", 0)
+  .transition()
+  .delay(2000 + index * 180)
+  .duration(220)
+  .attr("opacity", 1);
+
+const connectorPath = annotationGroup
+  .append("path")
+  .attr("d", path)
+  .attr("fill", "none")
+  .attr("stroke", category.color)
+  .attr("stroke-width", 1.5)
+  .attr("stroke-linejoin", "round")
+  .attr("stroke-linecap", "round");
+
+const textAnchor = "start";
+
+  const annotationText = annotationGroup
+    .append("text")
+    .attr("x", config.textX)
+    .attr("y", config.textY)
+    .attr("text-anchor", textAnchor)
+    .attr("fill", "var(--cream)")
+    .attr(
+      "font-family",
+      "Source Serif 4, Georgia, serif"
+    )
+    .attr("opacity", 0);
+
+  annotationText
+  .append("tspan")
+  .attr("x", config.textX)
+  .attr("font-size", "42px")
+  .attr("font-weight", 700)
+  .attr("fill", category.color)
+  .text(config.percentage.replace("%", ""));
+
+annotationText
+  .append("tspan")
+  .attr("font-size", "24px")
+  .attr("font-weight", 700)
+  .attr("fill", category.color)
+  .attr("baseline-shift", "baseline")
+  .text("%");
+
+  config.lines.forEach((line, lineIndex) => {
+    annotationText
+      .append("tspan")
+      .attr("x", config.textX)
+      .attr("dy", lineIndex === 0 ? "1.25em" : "1.15em")
+      .attr("font-size", "13px")
+      .attr("font-weight", lineIndex === 0 ? 700 : 400)
+      .attr("fill", "var(--cream)")
+      .text(line);
+  });
+
+  const connectorLength = connectorPath.node().getTotalLength();
+
+  connectorPath
+    .attr("stroke-dasharray", connectorLength)
+    .attr("stroke-dashoffset", connectorLength)
+    .transition()
+    .delay(2050 + index * 180)
+    .duration(550)
+    .ease(d3.easeCubicOut)
+    .attr("stroke-dashoffset", 0);
+
+  annotationText
+    .transition()
+    .delay(2520 + index * 180)
+    .duration(300)
+    .attr("opacity", 1);
+});
+
+/* Mapbox scrollytelling */
+mapboxgl.accessToken = 'pk.eyJ1IjoiYWxleGFtZWlyZWxsZXMiLCJhIjoiY21xZ3dnZGs5MDRuMjJ1cHpjNHZnOTd4diJ9.xFAr4tJ5G3RaOcB77N1_4A';
+
+/*
+  GeoJSON files expected beside index.html.
+
+  The first path in each array is the preferred filename.
+  The alternatives make the page more tolerant if your local files
+  use a slightly different name.
+*/
+const GEOJSON_FILES = {
+  brazil: [
+    "./BR_UF_2025_IBGE.json"
+  ],
+
+  brazilBoundary: [
+    "BRAZIL_BOUNDARY.geojson"
+  ],
+
+  rondonia: [
+    "./RO_Municipios_2025.geojson",
+    "./RO_Municipios_2025.json",
+    "./RO_Municipios_2025"
+  ],
+
+  rondoniaState: [
+    "./RO_UF_2025.geojson",
+    "./RO_UF_2025.json"
+  ],
+
+  municipalities: [
+    "./municipios_sp.geojson",
+  ],
+
+  city: [
+    "./BAIRROS_SAOPAULO.geojson",
+  ],
+
+  spState: [
+    "./SP_UF_2025.json"
+  ],
+
+  cityBoundary: [
+    "./SP_CAPITAL_BOUNDARY.geojson"
+  ]
+};
+
+const MAP_STYLE = "mapbox://styles/alexameirelles/cmrtzkty0003p01s8fpvqgg08";
+
+let jardimPaulistaConnectorPath;
+let jardimPaulistaConnectorDot;
+
+const map = new mapboxgl.Map({
+  container: "scrolly-map",
+  style: MAP_STYLE,
+  center: [-52.5, -14.5],
+  zoom: 3.4,
+  bearing: 0,
+  pitch: 0,
+  projection: { name: "mercator" }
+});
+
+const mapCalloutSvg = d3
+  .select("#scrolly-map")
+  .append("svg")
+  .attr("id", "map-callouts")
+  .attr("aria-hidden", "true");
+
+jardimPaulistaConnectorPath = mapCalloutSvg
+  .append("path")
+  .attr("fill", "none")
+  .attr("stroke", "#c96a10")
+  .attr("stroke-width", 2)
+  .attr("stroke-linecap", "round")
+  .attr("stroke-linejoin", "round");
+
+jardimPaulistaConnectorDot = mapCalloutSvg
+  .append("circle")
+  .attr("r", 4)
+  .attr("fill", "#c96a10");
+
+/* Prevent the reader from accidentally changing the narrative camera. */
+map.scrollZoom.disable();
+map.dragRotate.disable();
+map.touchZoomRotate.disableRotation();
+
+let brazilGeoJSON;
+let brazilBoundaryGeoJSON;
+let rondoniaGeoJSON;
+let rondoniaStateGeoJSON;
+let municipalitiesGeoJSON;
+let cityGeoJSON;
+let spStateGeoJSON;
+let jardimPaulistaCallout;
+let jardimPaulistaCenter;
+
+let brazilBounds;
+let rondoniaBounds;
+let municipalitiesBounds;
+let cityBounds;
+
+let activeChapterName = "brasil";
+let mapIsReady = false;
+
+/*
+  Some Mapbox styles define globe projection inside the style itself.
+  Setting Mercator again after the style loads prevents the map from
+  switching back to a globe at the national zoom level.
+*/
+map.on("style.load", () => {
+  map.setProjection({ name: "mercator" });
+  const canvas = map.getCanvas();
+  canvas.setAttribute("tabindex", "-1");
+  canvas.setAttribute("aria-hidden", "true");
+});
+
+map.on("move", updateJardimPaulistaConnector);
+map.on("resize", updateJardimPaulistaConnector);
+window.addEventListener(
+  "resize",
+  updateJardimPaulistaConnector
+);
+
+async function fetchFirstAvailable(paths) {
+  const errors = [];
+
+  for (const path of paths) {
+    try {
+      const response = await fetch(path);
+
+      if (!response.ok) {
+        errors.push(`${path}: HTTP ${response.status}`);
+        continue;
+      }
+
+      return {
+        path,
+        data: await response.json()
+      };
+    } catch (error) {
+      errors.push(`${path}: ${error.message}`);
+    }
+  }
+
+  throw new Error(errors.join(" | "));
+}
+
+/* Recursively adds every GeoJSON coordinate pair to a bounds object. */
+function extendBounds(bounds, coordinates) {
+  if (
+    Array.isArray(coordinates) &&
+    typeof coordinates[0] === "number" &&
+    typeof coordinates[1] === "number"
+  ) {
+    bounds.extend(coordinates);
+    return;
+  }
+
+  if (Array.isArray(coordinates)) {
+    coordinates.forEach(item => extendBounds(bounds, item));
+  }
+}
+
+function getGeoJSONBounds(geojson) {
+  const bounds = new mapboxgl.LngLatBounds();
+
+  geojson.features.forEach(feature => {
+    if (feature.geometry?.coordinates) {
+      extendBounds(bounds, feature.geometry.coordinates);
+    }
+  });
+
+  return bounds;
+}
+
+/*
+  Returns a normalized string from the first property that exists.
+  This accommodates GeoJSONs from different sources.
+*/
+function firstProperty(feature, propertyNames) {
+  const properties = feature.properties || {};
+
+  for (const propertyName of propertyNames) {
+    const value = properties[propertyName];
+
+    if (value !== undefined && value !== null && value !== "") {
+      return String(value).trim();
+    }
+  }
+
+  return "";
+}
+
+function getMunicipalityCode(feature) {
+  return firstProperty(feature, [
+    "id",
+    "ID",
+    "CD_MUN",
+    "CD_MUN_2025",
+    "codigo_ibge",
+    "cod_municipio",
+    "geocodigo"
+  ]).replace(/\D/g, "");
+}
+
+function getMunicipalityName(feature) {
+  return firstProperty(feature, [
+    "name",
+    "NAME",
+    "NM_MUN",
+    "nome",
+    "nome_municipio",
+    "municipio"
+  ]).toLocaleLowerCase("pt-BR");
+}
+
+function findSaoPauloMunicipalityFeature(geojson) {
+  return geojson.features.find(feature => {
+    const code = getMunicipalityCode(feature);
+    const name = getMunicipalityName(feature);
+
+    return (
+      code === "3550308" ||
+      name === "são paulo" ||
+      name === "sao paulo"
+    );
+  });
+}
+
+function addGeoJSONSourceAndLayers({
+  sourceId,
+  geojson,
+  fillLayerId,
+  lineLayerId,
+  fillColor,
+  fillOpacity,
+  lineColor = "#111111",
+  lineWidth = 1,
+  visibility = "none"
+}) {
+  map.addSource(sourceId, {
+    type: "geojson",
+    data: geojson
+  });
+
+  map.addLayer({
+    id: fillLayerId,
+    type: "fill",
+    source: sourceId,
+    layout: {
+      visibility
+    },
+    paint: {
+      "fill-color": fillColor,
+      "fill-opacity": fillOpacity
+    }
+  });
+
+  map.addLayer({
+    id: lineLayerId,
+    type: "line",
+    source: sourceId,
+    layout: {
+      visibility
+    },
+    paint: {
+      "line-color": lineColor,
+      "line-opacity": 0.9,
+      "line-width": lineWidth
+    }
+  });
+}
+
+const LAYERS = {
+  brazil: [
+    "brazil-states-fill",
+    "brazil-boundary-outline",
+    "state-highlight-labels"
+  ],
+  rondonia: [
+    "ro-municipalities-fill",
+    "ro-municipalities-outline",
+    "ro-state-boundary-outline"
+  ],
+  municipalities: [
+    "sp-municipalities-fill",
+    "sp-municipalities-outline",
+    "sp-state-boundary-outline"
+  ],
+  city: [
+    "sp-city-fill",
+    "sp-city-outline",
+    "sp-city-boundary-outline"
+  ]
+};
+
+function setLayerGroupVisibility(groupName, visible) {
+  LAYERS[groupName].forEach(layerId => {
+    if (map.getLayer(layerId)) {
+      map.setLayoutProperty(
+        layerId,
+        "visibility",
+        visible ? "visible" : "none"
+      );
+    }
+  });
+}
+
+function showOnlyLayerGroup(groupName) {
+  Object.keys(LAYERS).forEach(name => {
+    setLayerGroupVisibility(name, name === groupName);
+  });
+}
+
+let mapTransitionId = 0;
+let municipalityFadeTimer = null;
+let brazilHideTimer = null;
+let cityFadeTimer = null;
+let municipalityHideTimer = null;
+let jardimCalloutTimer = null;
+
+function clearMapTransitionTimers() {
+  window.clearTimeout(municipalityFadeTimer);
+  window.clearTimeout(brazilHideTimer);
+  window.clearTimeout(cityFadeTimer);
+  window.clearTimeout(municipalityHideTimer);
+  window.clearTimeout(jardimCalloutTimer);
+
+  municipalityFadeTimer = null;
+  brazilHideTimer = null;
+  cityFadeTimer = null;
+  municipalityHideTimer = null;
+  jardimCalloutTimer = null;
+}
+
+function setPaintTransition(layerId, property, duration = 0, delay = 0) {
+  if (!map.getLayer(layerId)) return;
+
+  map.setPaintProperty(
+    layerId,
+    `${property}-transition`,
+    { duration, delay }
+  );
+}
+
+function setPaintValue(layerId, property, value) {
+  if (map.getLayer(layerId)) {
+    map.setPaintProperty(layerId, property, value);
+  }
+}
+
+function resetMapLayerOpacity() {
+  setPaintTransition("brazil-states-fill", "fill-opacity");
+  setPaintTransition("brazil-boundary-outline", "line-opacity");
+  setPaintTransition("ro-municipalities-fill", "fill-opacity");
+  setPaintTransition("ro-municipalities-outline", "line-opacity");
+  setPaintTransition("ro-state-boundary-outline", "line-opacity");
+  setPaintTransition("sp-municipalities-fill", "fill-opacity");
+  setPaintTransition("sp-municipalities-outline", "line-opacity");
+  setPaintTransition("sp-state-boundary-outline", "line-opacity");
+  setPaintTransition("sp-city-fill", "fill-opacity");
+  setPaintTransition("sp-city-outline", "line-opacity");
+  setPaintTransition("sp-city-boundary-outline", "line-opacity");
+
+  setPaintValue("brazil-states-fill", "fill-opacity", 0.8);
+  setPaintValue("brazil-boundary-outline", "line-opacity", 1);
+  setPaintValue("ro-municipalities-fill", "fill-opacity", 0.8);
+  setPaintValue("ro-municipalities-outline", "line-opacity", 1);
+  setPaintValue("ro-state-boundary-outline", "line-opacity", 1);
+  setPaintValue("sp-municipalities-fill", "fill-opacity", 1);
+  setPaintValue("sp-municipalities-outline", "line-opacity", 1);
+  setPaintValue("sp-state-boundary-outline", "line-opacity", 1);
+  setPaintValue("sp-city-fill", "fill-opacity", 1);
+  setPaintValue("sp-city-outline", "line-opacity", 1);
+  setPaintValue("sp-city-boundary-outline", "line-opacity", 1);
+}
+
+function easeInOutCubic(t) {
+  return t < 0.5
+    ? 4 * t * t * t
+    : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+function setJardimCalloutVisibility(visible) {
+  const jardimCalloutElement =
+    jardimPaulistaCallout?.getElement();
+
+  jardimCalloutElement?.classList.toggle(
+    "visible",
+    visible
+  );
+
+  document
+    .getElementById("map-callouts")
+    ?.classList.toggle(
+      "visible",
+      visible
+    );
+}
+
+function showBrazil(duration = 1600) {
+  if (!brazilBounds) return;
+
+  if (map.getLayer("state-highlight-labels")) {
+    map.setLayoutProperty("state-highlight-labels", "visibility", "visible");
+  }
+
+  mapTransitionId += 1;
+  clearMapTransitionTimers();
+  map.stop();
+
+  resetMapLayerOpacity();
+  showOnlyLayerGroup("brazil");
+
+  map.fitBounds(brazilBounds, {
+    padding: {
+      top: 45,
+      right: 45,
+      bottom: 45,
+      left: 500
+    },
+    bearing: 0,
+    pitch: 0,
+    duration,
+    easing: easeInOutCubic
+  });
+}
+
+function showRondonia(duration = 2200) {
+  if (!rondoniaBounds) return;
+
+  if (map.getLayer("state-highlight-labels")) {
+    map.setLayoutProperty("state-highlight-labels", "visibility", "none");
+  }
+
+  mapTransitionId += 1;
+  clearMapTransitionTimers();
+  map.stop();
+
+  resetMapLayerOpacity();
+  showOnlyLayerGroup("rondonia");
+
+  map.fitBounds(rondoniaBounds, {
+    padding: {
+      top: 70,
+      right: 70,
+      bottom: 70,
+      left: 520
+    },
+    bearing: 0,
+    pitch: 0,
+    duration,
+    easing: easeInOutCubic
+  });
+}
+
+function showSaoPauloState() {
+  if (!municipalitiesBounds) return;
+
+  if (map.getLayer("state-highlight-labels")) {
+    map.setLayoutProperty("state-highlight-labels", "visibility", "none");
+  }
+
+  const transitionId = ++mapTransitionId;
+  const cameraDuration = 2600;
+  const fadeDelay = 1700;
+  const fadeDuration = 900;
+
+  clearMapTransitionTimers();
+  map.stop();
+
+  /*
+    Keep the Brazil layer visible while the camera approaches São Paulo.
+    The municipal layer is already loaded, but begins fully transparent.
+  */
+  setLayerGroupVisibility("brazil", true);
+  setLayerGroupVisibility("municipalities", true);
+  setLayerGroupVisibility("city", false);
+
+  setPaintTransition("brazil-states-fill", "fill-opacity");
+  setPaintTransition("brazil-boundary-outline", "line-opacity");
+  setPaintTransition("ro-municipalities-fill", "fill-opacity");
+  setPaintTransition("ro-municipalities-outline", "line-opacity");
+  setPaintTransition("ro-state-boundary-outline", "line-opacity");
+  setPaintTransition("sp-municipalities-fill", "fill-opacity");
+  setPaintTransition("sp-municipalities-outline", "line-opacity");
+  setPaintTransition("sp-state-boundary-outline", "line-opacity");
+
+  setPaintValue("brazil-states-fill", "fill-opacity", 0.8);
+  setPaintValue("brazil-boundary-outline", "line-opacity", 1);
+  setPaintValue("sp-municipalities-fill", "fill-opacity", 0);
+  setPaintValue("sp-municipalities-outline", "line-opacity", 0);
+  setPaintValue("sp-state-boundary-outline", "line-opacity", 0);
+
+  map.fitBounds(municipalitiesBounds, {
+    padding: {
+      top: 100,
+      right: 80,
+      bottom: 100,
+      left: 550
+    },
+    bearing: 0,
+    pitch: 0,
+    duration: cameraDuration,
+    easing: easeInOutCubic
+  });
+
+  /*
+    Near the end of the zoom, reveal the municipalities while the
+    national state layer fades away underneath them.
+  */
+  municipalityFadeTimer = window.setTimeout(() => {
+    if (transitionId !== mapTransitionId) return;
+
+    setPaintTransition(
+      "sp-municipalities-fill",
+      "fill-opacity",
+      fadeDuration
+    );
+    setPaintTransition(
+      "sp-municipalities-outline",
+      "line-opacity",
+      fadeDuration
+    );
+    setPaintTransition(
+      "sp-state-boundary-outline",
+      "line-opacity",
+      fadeDuration
+    );
+    setPaintTransition(
+      "brazil-states-fill",
+      "fill-opacity",
+      fadeDuration
+    );
+    setPaintTransition(
+      "brazil-boundary-outline",
+      "line-opacity",
+      fadeDuration
+    );
+
+    setPaintValue("sp-municipalities-fill", "fill-opacity", 0.8);
+    setPaintValue("sp-municipalities-outline", "line-opacity", 1);
+    setPaintValue("sp-state-boundary-outline", "line-opacity", 1);
+    setPaintValue("brazil-states-fill", "fill-opacity", 0);
+    setPaintValue("brazil-boundary-outline", "line-opacity", 0);
+  }, fadeDelay);
+
+  brazilHideTimer = window.setTimeout(() => {
+    if (transitionId !== mapTransitionId) return;
+
+    setLayerGroupVisibility("brazil", false);
+
+    // Leave the final SP layer values clean for the next chapter.
+    setPaintTransition("sp-municipalities-fill", "fill-opacity");
+    setPaintTransition("sp-municipalities-outline", "line-opacity");
+    setPaintTransition("sp-state-boundary-outline", "line-opacity");
+  }, fadeDelay + fadeDuration + 50);
+}
+
+function showSaoPauloCity() {
+  if (!cityBounds) return;
+
+  if (map.getLayer("state-highlight-labels")) {
+    map.setLayoutProperty("state-highlight-labels", "visibility", "none");
+  }
+
+  const transitionId = ++mapTransitionId;
+  const cameraDuration = 2400;
+  const fadeDelay = 1500;
+  const fadeDuration = 900;
+
+  clearMapTransitionTimers();
+  map.stop();
+
+  /*
+    Keep the municipal map visible while the camera moves toward
+    São Paulo capital. The capital polygon starts transparent.
+  */
+  setLayerGroupVisibility("brazil", false);
+  setLayerGroupVisibility("municipalities", true);
+  setLayerGroupVisibility("city", true);
+
+  setPaintTransition("sp-municipalities-fill", "fill-opacity");
+  setPaintTransition("sp-municipalities-outline", "line-opacity");
+  setPaintTransition("sp-state-boundary-outline", "line-opacity");
+  setPaintTransition("sp-city-fill", "fill-opacity");
+  setPaintTransition("sp-city-outline", "line-opacity");
+  setPaintTransition("sp-city-boundary-outline", "line-opacity");
+
+  setPaintValue("sp-municipalities-fill", "fill-opacity", 0.8);
+  setPaintValue("sp-municipalities-outline", "line-opacity", 1);
+  setPaintValue("sp-state-boundary-outline", "line-opacity", 1);
+  setPaintValue("sp-city-fill", "fill-opacity", 0);
+  setPaintValue("sp-city-outline", "line-opacity", 0);
+  setPaintValue("sp-city-boundary-outline", "line-opacity", 0);
+
+  map.fitBounds(cityBounds, {
+    padding: {
+      top: 55,
+      right: 40,
+      bottom: 55,
+      left: 550
+    },
+    bearing: 0,
+    pitch: 0,
+    duration: cameraDuration,
+    easing: easeInOutCubic
+  });
+
+  /*
+    Reveal the Jardim Paulista annotation only after the capital
+    has finished moving into place. The extra 300 ms creates a
+    small pause before the gentle fade-in.
+  */
+  jardimCalloutTimer = window.setTimeout(() => {
+    if (
+      transitionId !== mapTransitionId ||
+      activeChapterName !== "capital-sp"
+    ) {
+      return;
+    }
+
+    updateJardimPaulistaConnector();
+
+    requestAnimationFrame(() => {
+      setJardimCalloutVisibility(true);
+    });
+  }, cameraDuration + 300);
+
+  /*
+    During the final part of the zoom, fade the capital in while
+    the statewide municipality layer fades away underneath it.
+  */
+  cityFadeTimer = window.setTimeout(() => {
+    if (transitionId !== mapTransitionId) return;
+
+    setPaintTransition(
+      "sp-city-fill",
+      "fill-opacity",
+      fadeDuration
+    );
+    setPaintTransition(
+      "sp-city-outline",
+      "line-opacity",
+      fadeDuration
+    );
+    setPaintTransition(
+      "sp-city-boundary-outline",
+      "line-opacity",
+      fadeDuration
+    );
+    setPaintTransition(
+      "sp-municipalities-fill",
+      "fill-opacity",
+      fadeDuration
+    );
+    setPaintTransition(
+      "sp-municipalities-outline",
+      "line-opacity",
+      fadeDuration
+    );
+    setPaintTransition(
+      "sp-state-boundary-outline",
+      "line-opacity",
+      fadeDuration
+    );
+
+    setPaintValue("sp-city-fill", "fill-opacity", 1);
+    setPaintValue("sp-city-outline", "line-opacity", 1);
+    setPaintValue("sp-city-boundary-outline", "line-opacity", 1);
+    setPaintValue("sp-municipalities-fill", "fill-opacity", 0);
+    setPaintValue("sp-municipalities-outline", "line-opacity", 0);
+    setPaintValue("sp-state-boundary-outline", "line-opacity", 0);
+  }, fadeDelay);
+
+  municipalityHideTimer = window.setTimeout(() => {
+    if (transitionId !== mapTransitionId) return;
+
+    setLayerGroupVisibility("municipalities", false);
+
+    setPaintTransition("sp-city-fill", "fill-opacity");
+    setPaintTransition("sp-city-outline", "line-opacity");
+    setPaintTransition("sp-city-boundary-outline", "line-opacity");
+  }, fadeDelay + fadeDuration + 50);
+}
+
+const mapLegend = document.getElementById("map-legend");
+const mapLegendGeography = document.getElementById("map-legend-geography");
+
+const LEGEND_GEOGRAPHY_BY_CHAPTER = {
+  brasil: "By state",
+  rondonia: "By municipality in Rondônia",
+  "estado-sp": "By municipality in São Paulo state",
+  "capital-sp": "By district in São Paulo city"
+};
+
+function updateMapLegend(chapterName) {
+  if (!mapLegend || !mapLegendGeography) return;
+
+  mapLegendGeography.textContent =
+    LEGEND_GEOGRAPHY_BY_CHAPTER[chapterName] ?? "";
+
+  mapLegend.setAttribute(
+    "aria-label",
+    `Color scale for outpatient visits ${mapLegendGeography.textContent.toLowerCase()}. Lower values are light cream and higher values are dark brown. Gray indicates zero or no recorded visits.`
+  );
+}
+
+function updateMapLegendVisibility() {
+  if (!mapLegend) return;
+
+  const scrolly = document.getElementById("scrolly");
+  const bounds = scrolly.getBoundingClientRect();
+  const isVisible = bounds.top < window.innerHeight && bounds.bottom > 0;
+
+  mapLegend.classList.toggle("visible", isVisible);
+}
+
+function setActiveChapter(chapterName, force = false) {
+  if (!mapIsReady || !chapterName) return;
+  if (!force && chapterName === activeChapterName) return;
+
+  /*
+    Hide the annotation as soon as a chapter transition starts.
+    The capital chapter reveals it later, after its camera settles.
+  */
+  setJardimCalloutVisibility(false);
+
+  if (chapterName === "brasil") {
+    showBrazil();
+  } else if (chapterName === "rondonia") {
+    showRondonia();
+  } else if (chapterName === "estado-sp") {
+    showSaoPauloState();
+  } else if (chapterName === "capital-sp") {
+    showSaoPauloCity();
+  }
+
+  document
+    .querySelectorAll(".scrolly-step")
+    .forEach(step => step.classList.remove("active"));
+
+  document.getElementById(chapterName)?.classList.add("active");
+  updateMapLegend(chapterName);
+  activeChapterName = chapterName;
+}
+
+function updateScrolly() {
+  updateMapLegendVisibility();
+  if (!mapIsReady) return;
+
+  const scrolly = document.getElementById("scrolly");
+  const scrollyBounds = scrolly.getBoundingClientRect();
+  const screenCenter = window.innerHeight / 2;
+
+  const opening = document.querySelector(".scrolly-opening");
+  const openingBounds = opening.getBoundingClientRect();
+
+  /* Initial scrolly viewport: Brazil. */
+  if (
+    openingBounds.top <= screenCenter &&
+    openingBounds.bottom >= screenCenter
+  ) {
+    setActiveChapter("brasil");
+    return;
+  }
+
+  /* Advance through Rondônia, São Paulo state, and São Paulo city. */
+  for (const chapterName of ["rondonia", "estado-sp", "capital-sp"]) {
+    const section = document.getElementById(chapterName);
+    const bounds = section.getBoundingClientRect();
+
+    if (bounds.top <= screenCenter && bounds.bottom >= screenCenter) {
+      setActiveChapter(chapterName);
+      return;
+    }
+  }
+
+  /* Before entering the scrolly, prepare the initial national view. */
+  if (scrollyBounds.top > screenCenter) {
+    setActiveChapter("brasil");
+  }
+}
+
+function showMapError(message) {
+  console.error(message);
+
+  document.getElementById("scrolly-map").insertAdjacentHTML(
+    "beforeend",
+    `<div style="position:absolute;left:1rem;right:1rem;bottom:1rem;padding:.9rem;background:rgba(7,7,8,.94);color:#f4f1ea;font-family:serif;font-size:.9rem;line-height:1.45;z-index:5;">
+      ${message}
+    </div>`
+  );
+}
+
+function normalizeName(name) {
+  return String(name ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toUpperCase();
+}
+
+/* Shared 11-color logarithmic scale for all choropleth maps. */
+const MAP_COLOR_PALETTE = [
+  "#fffcf2",
+  "#fdf4d4",
+  "#fbe8ad",
+  "#f8d66d",
+  "#f5c24b",
+  "#f2b632",
+  "#ec9629",
+  "#de7420",
+  "#c96a10",
+  "#963f08",
+  "#5a2203"
+];
+
+function createLogColorExpression(maxValue, noDataColor = "#444444") {
+  const safeMax = Math.max(Number(maxValue) || 1, 1);
+  const logMax = Math.log1p(safeMax);
+  const stops = MAP_COLOR_PALETTE.flatMap((color, index) => [
+    logMax * (index / (MAP_COLOR_PALETTE.length - 1)),
+    color
+  ]);
+
+  return [
+    "case",
+    [
+      "any",
+      ["==", ["get", "value"], null],
+      ["<=", ["coalesce", ["get", "value"], 0], 0]
+    ],
+    noDataColor,
+    [
+      "interpolate",
+      ["linear"],
+      ["ln", ["+", ["get", "value"], 1]],
+      ...stops
+    ]
+  ];
+}
+
+function formatDistrictName(name) {
+  const key = String(name ?? "").trim().toUpperCase();
+
+  return districtNames[key] ??
+    key
+      .toLowerCase()
+      .replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function updateJardimPaulistaConnector() {
+  if (
+    !jardimPaulistaCenter ||
+    !jardimPaulistaCallout ||
+    !jardimPaulistaConnectorPath ||
+    !jardimPaulistaConnectorDot
+  ) {
+    return;
+  }
+
+  const mapContainer =
+    document.getElementById("scrolly-map");
+
+  const calloutBox =
+    jardimPaulistaCallout
+      .getElement()
+      .querySelector(".jardim-callout__box");
+
+  if (!mapContainer || !calloutBox) return;
+
+  const mapRect =
+    mapContainer.getBoundingClientRect();
+
+  const boxRect =
+    calloutBox.getBoundingClientRect();
+
+  const start =
+    map.project(jardimPaulistaCenter);
+
+  const endX =
+    boxRect.left - mapRect.left;
+
+  const endY =
+    boxRect.top -
+    mapRect.top +
+    boxRect.height / 2;
+
+  const path = `
+    M${start.x},${start.y}
+    L${start.x},${endY}
+    L${endX},${endY}
+  `;
+
+  jardimPaulistaConnectorPath
+    .attr("d", path);
+
+  jardimPaulistaConnectorDot
+    .attr("cx", start.x)
+    .attr("cy", start.y);
+}
+
+function createJardimPaulistaCallout() {
+  const jardimPaulistaFeature = cityGeoJSON?.features?.find(feature => {
+    return normalizeName(feature.properties?.ds_nome) === "JARDIM PAULISTA";
+  });
+
+  if (!jardimPaulistaFeature) {
+    console.warn(
+      "Jardim Paulista was not found in the district GeoJSON."
+    );
+    return;
+  }
+
+  jardimPaulistaCenter =
+    d3.geoCentroid(jardimPaulistaFeature);
+
+  const calloutElement = document.createElement("div");
+  calloutElement.className = "jardim-callout";
+
+  calloutElement.innerHTML = `
+  <div class="jardim-callout__box">
+    <strong>
+      The Institute of Psychiatry at the hospital
+      (IPq-HCFMUSP)
+    </strong>
+    offers free, specialized care for gambling addiction
+    for people over 18 whose compulsive gambling affects
+    their work, finances, or personal relationships.
+  </div>
+`;
+
+  jardimPaulistaCallout = new mapboxgl.Marker({
+    element: calloutElement,
+    anchor: "left",
+    offset: [100, 200]
+  })
+    .setLngLat(jardimPaulistaCenter)
+    .addTo(map);
+
+  requestAnimationFrame(updateJardimPaulistaConnector);
+}
+
+map.on("load", async () => {
+  try {
+    /* Reinforce Mercator after the custom style has fully loaded. */
+    map.setProjection({ name: "mercator" });
+
+    const [
+      brazilData,
+      brazilBoundaryData,
+      rondoniaData,
+      rondoniaStateData,
+      spData,
+      capitalData,
+      spStateData,
+      cityBoundaryData,
+      rondoniaMunicipalityData,
+      municipalityData,
+      districtData
+    ] = await Promise.all([
+      fetchFirstAvailable(GEOJSON_FILES.brazil),
+      fetchFirstAvailable(GEOJSON_FILES.brazilBoundary),
+      fetchFirstAvailable(GEOJSON_FILES.rondonia),
+      fetchFirstAvailable(GEOJSON_FILES.rondoniaState),
+      fetchFirstAvailable(GEOJSON_FILES.municipalities),
+      fetchFirstAvailable(GEOJSON_FILES.city),
+      fetchFirstAvailable(GEOJSON_FILES.spState),
+      fetchFirstAvailable(GEOJSON_FILES.cityBoundary),
+      d3.csv("df_ro_state.csv"),
+      d3.csv("df_sp_state.csv"),
+      d3.csv("df_capital_districts.csv")
+    ]);
+
+    brazilGeoJSON = brazilData.data;
+    brazilBoundaryGeoJSON = brazilBoundaryData.data;
+    rondoniaGeoJSON = rondoniaData.data;
+    rondoniaStateGeoJSON = rondoniaStateData.data;
+    municipalitiesGeoJSON = spData.data;
+    cityGeoJSON = capitalData.data;
+    spStateGeoJSON = spStateData.data;
+
+    createJardimPaulistaCallout();
+
+    /* Join the Rondônia CSV to the municipal GeoJSON. */
+    const rondoniaValueByCode = new Map();
+    const rondoniaValueByName = new Map();
+
+    rondoniaMunicipalityData.forEach(row => {
+      const code = String(
+        row.id_municipio ??
+        row.codigo_ibge ??
+        row.CD_MUN ??
+        row.geocodigo ??
+        ""
+      ).replace(/\D/g, "");
+
+      const name = normalizeName(
+        row.nome_municipio ??
+        row.municipio ??
+        row.NM_MUN ??
+        row.name ??
+        ""
+      );
+
+      const explicitValue = Number(
+        row.value ??
+        row.count ??
+        row.registros ??
+        row.total ??
+        row.atendimentos ??
+        NaN
+      );
+
+      const value = Number.isFinite(explicitValue) ? explicitValue : 1;
+
+      if (code) {
+        rondoniaValueByCode.set(
+          code,
+          (rondoniaValueByCode.get(code) ?? 0) + value
+        );
+      }
+
+      if (name) {
+        rondoniaValueByName.set(
+          name,
+          (rondoniaValueByName.get(name) ?? 0) + value
+        );
+      }
+    });
+
+    rondoniaGeoJSON.features.forEach(feature => {
+      feature.properties = feature.properties ?? {};
+
+      const code = getMunicipalityCode(feature);
+      const name = normalizeName(
+        firstProperty(feature, [
+          "NM_MUN",
+          "name",
+          "NAME",
+          "nome",
+          "nome_municipio",
+          "municipio"
+        ])
+      );
+
+      feature.properties.display_name = firstProperty(feature, [
+        "NM_MUN",
+        "name",
+        "NAME",
+        "nome",
+        "nome_municipio",
+        "municipio"
+      ]);
+
+      feature.properties.value =
+        rondoniaValueByCode.get(code) ??
+        rondoniaValueByName.get(name) ??
+        0;
+    });
+
+    /*
+      Join the capital CSV to the district GeoJSON.
+
+      GeoJSON district field: properties.ds_nome
+      CSV fields supported: district or ds_nome, plus value.
+    */
+    const districtValueMap = new Map(
+      districtData.map(row => {
+        const csvDistrictName =
+          row.distrito ??
+          row.ds_nome ??
+          row.DISTRICT ??
+          row.DS_NOME ??
+          "";
+
+        const csvValue = Number(
+          row.value ??
+          row.count ??
+          row.registros ??
+          row.total ??
+          0
+        );
+
+        return [
+          normalizeName(csvDistrictName),
+          Number.isFinite(csvValue) ? csvValue : 0
+        ];
+      })
+    );
+
+    cityGeoJSON.features.forEach(feature => {
+      feature.properties = feature.properties ?? {};
+
+      const geojsonDistrictName = normalizeName(
+        feature.properties.ds_nome
+      );
+
+      feature.properties.value =
+        districtValueMap.get(geojsonDistrictName) ?? 0;
+    });
+
+    const matchedDistricts = cityGeoJSON.features.filter(
+      feature => Number(feature.properties.value) > 0
+    );
+
+    const unmatchedGeoJSONDistricts = cityGeoJSON.features
+      .filter(feature => Number(feature.properties.value) === 0)
+      .map(feature => feature.properties.ds_nome);
+
+    console.info(
+      `Capital district join: ${matchedDistricts.length} of ${cityGeoJSON.features.length} districts matched the CSV.`
+    );
+
+    console.table(
+      cityGeoJSON.features.map(feature => ({
+        ds_nome: feature.properties.ds_nome,
+        normalized_name: normalizeName(feature.properties.ds_nome),
+        value: feature.properties.value
+      }))
+    );
+
+    if (unmatchedGeoJSONDistricts.length) {
+      console.warn(
+        "Districts without a matching CSV value:",
+        unmatchedGeoJSONDistricts
+      );
+    }
+
+    const cityBoundaryGeoJSON = cityBoundaryData.data;
+
+/*
+  Count how many CSV rows belong to each municipality.
+  GeoJSON key: feature.properties.name
+  CSV key: d.nome_municipio
+*/
+const municipalityCountMap = d3.rollup(
+  municipalityData.filter(d => d.nome_municipio),
+  rows => rows.length,
+  d => normalizeName(d.nome_municipio)
+);
+
+municipalitiesGeoJSON.features.forEach(feature => {
+  feature.properties = feature.properties ?? {};
+
+  const municipalityName = normalizeName(
+    feature.properties.name
+  );
+
+  feature.properties.value =
+    municipalityCountMap.get(municipalityName) ?? 0;
+});
+
+console.table(
+  municipalitiesGeoJSON.features.map(feature => ({
+    municipio: feature.properties.name,
+    registros: feature.properties.value
+  }))
+);
+
+    /* Attach each state's value to its GeoJSON feature. */
+    brazilGeoJSON.features.forEach(feature => {
+      const properties = feature.properties ?? {};
+
+      const uf = String(
+        properties.sigla_uf ??
+        properties.SIGLA_UF ??
+        properties.sigla ??
+        properties.SIGLA ??
+        properties.uf ??
+        properties.UF ??
+        ""
+      ).trim().toUpperCase();
+
+      feature.properties = properties;
+      feature.properties.uf = uf;
+      feature.properties.value = stateValueMap.get(uf) ?? null;
+    });
+
+    console.table(
+      brazilGeoJSON.features.map(feature => ({
+        uf:
+          feature.properties.sigla_uf ??
+          feature.properties.SIGLA_UF ??
+          feature.properties.sigla ??
+          feature.properties.SIGLA ??
+          feature.properties.uf ??
+          feature.properties.UF,
+        value: feature.properties.value
+      }))
+    );
+
+    brazilBounds = getGeoJSONBounds(brazilGeoJSON);
+    rondoniaBounds = getGeoJSONBounds(rondoniaGeoJSON);
+    municipalitiesBounds = getGeoJSONBounds(municipalitiesGeoJSON);
+    cityBounds = getGeoJSONBounds(cityGeoJSON);
+
+    /*
+      Safety check: if the city file accidentally contains all municipalities,
+      isolate the São Paulo municipality and use its limits for the final view.
+    */
+    const cityMunicipalityFeature = findSaoPauloMunicipalityFeature(cityGeoJSON);
+
+    if (cityMunicipalityFeature && cityGeoJSON.features.length > 100) {
+      cityGeoJSON = {
+        type: "FeatureCollection",
+        features: [cityMunicipalityFeature]
+      };
+
+      cityBounds = getGeoJSONBounds(cityGeoJSON);
+    }
+
+    const rondoniaValues = rondoniaGeoJSON.features
+      .map(feature => Number(feature.properties.value))
+      .filter(value => Number.isFinite(value) && value > 0);
+
+    const rondoniaMax = d3.max(rondoniaValues) ?? 1;
+
+    addGeoJSONSourceAndLayers({
+      sourceId: "ro-municipalities",
+      geojson: rondoniaGeoJSON,
+      fillLayerId: "ro-municipalities-fill",
+      lineLayerId: "ro-municipalities-outline",
+      fillColor: createLogColorExpression(rondoniaMax, "#505050"),
+      fillOpacity: 0.8,
+      lineColor: "#070708",
+      lineWidth: 0.7,
+      visibility: "none"
+    });
+
+    // Separate state boundary, without internal municipal divisions.
+    map.addSource("ro-state-boundary", {
+      type: "geojson",
+      data: rondoniaStateGeoJSON
+    });
+
+    map.addLayer({
+      id: "ro-state-boundary-outline",
+      type: "line",
+      source: "ro-state-boundary",
+      layout: {
+        visibility: "none",
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      paint: {
+        "line-color": "#f4f1ea",
+        "line-width": 3,
+        "line-opacity": 1
+      }
+    });
+
+    addGeoJSONSourceAndLayers({
+      sourceId: "brazil-states",
+      geojson: brazilGeoJSON,
+      fillLayerId: "brazil-states-fill",
+      lineLayerId: "brazil-states-outline",
+      fillColor: createLogColorExpression(
+        d3.max(stateData, d => d.value) ?? 1
+      ),
+      fillOpacity: 1,
+      lineColor: "#f4f1ea",
+      lineWidth: 0.8,
+      visibility: "visible"
+    });
+
+    map.addSource("brazil-boundary", {
+      type: "geojson",
+      data: brazilBoundaryGeoJSON
+    });
+
+    map.addLayer({
+      id: "brazil-boundary-outline",
+      type: "line",
+      source: "brazil-boundary",
+      layout: {
+        visibility: "visible",
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      paint: {
+        "line-color": "#f4f1ea",
+        "line-width": 2.5,
+        "line-opacity": 1
+      }
+    });
+
+    /*
+      Labels used only in the national view. Because these are a Mapbox
+      symbol layer—not HTML markers—they are hidden with the Brazil group.
+    */
+    map.addSource("state-highlight-labels-source", {
+      type: "geojson",
+      data: {
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            properties: { label: "SP" },
+            geometry: {
+              type: "Point",
+              coordinates: [-48.2, -22.4]
+            }
+          },
+          {
+            type: "Feature",
+            properties: { label: "RO" },
+            geometry: {
+              type: "Point",
+              coordinates: [-63.2, -10.8]
+            }
+          }
+        ]
+      }
+    });
+
+    map.addLayer({
+      id: "state-highlight-labels",
+      type: "symbol",
+      source: "state-highlight-labels-source",
+      layout: {
+        visibility: "visible",
+        "text-field": ["get", "label"],
+        "text-size": 18,
+        "text-allow-overlap": true,
+        "text-ignore-placement": true
+      },
+      paint: {
+        "text-color": "#f6f1e6",
+        "text-halo-color": "#070708",
+        "text-halo-width": 1,
+        "text-halo-blur": 0
+      }
+    });
+
+    /* Brazil state tooltip */
+    const mapTooltip = document.getElementById("map-tooltip");
+    const mapTooltipState = document.getElementById("map-tooltip-state");
+    const mapTooltipValue = document.getElementById("map-tooltip-value");
+    const mapTooltipSuffix = document.getElementById("map-tooltip-suffix");
+    const formatStateValue = new Intl.NumberFormat("pt-BR");
+
+    function getStateLabel(properties) {
+      return String(
+        properties.nome ??
+        properties.NOME ??
+        properties.nome_uf ??
+        properties.NM_UF ??
+        properties.name ??
+        properties.NAME ??
+        properties.sigla_uf ??
+        properties.SIGLA_UF ??
+        properties.uf ??
+        properties.UF ??
+        "Estado"
+      );
+    }
+
+    function positionMapTooltip(event) {
+      const gap = 18;
+      const tooltipWidth = mapTooltip.offsetWidth;
+      const tooltipHeight = mapTooltip.offsetHeight;
+      let left = event.originalEvent.clientX + gap;
+      let top = event.originalEvent.clientY - tooltipHeight / 2;
+
+      if (left + tooltipWidth > window.innerWidth - 10) {
+        left = event.originalEvent.clientX - tooltipWidth - gap;
+        mapTooltip.classList.add("map-tooltip--left");
+      } else {
+        mapTooltip.classList.remove("map-tooltip--left");
+      }
+
+      top = Math.max(10, Math.min(top, window.innerHeight - tooltipHeight - 10));
+      mapTooltip.style.left = `${left}px`;
+      mapTooltip.style.top = `${top}px`;
+    }
+
+    map.on("mousemove", "brazil-states-fill", event => {
+      const feature = event.features?.[0];
+      if (!feature) return;
+
+      const properties = feature.properties ?? {};
+      const rawValue = properties.value;
+      const value = rawValue === null || rawValue === undefined || rawValue === ""
+        ? null
+        : Number(rawValue);
+
+      map.getCanvas().style.cursor = "pointer";
+      mapTooltip.style.display = "block";
+      mapTooltip.setAttribute("aria-hidden", "false");
+      mapTooltipState.textContent = getStateLabel(properties);
+      mapTooltipValue.textContent = value === null || Number.isNaN(value)
+        ? "No data"
+        : formatStateValue.format(value);
+      mapTooltipSuffix.textContent = value === null || Number.isNaN(value)
+        ? ""
+        : "records";
+
+      positionMapTooltip(event);
+    });
+
+    map.on("mouseleave", "brazil-states-fill", () => {
+      map.getCanvas().style.cursor = "";
+      mapTooltip.style.display = "none";
+      mapTooltip.setAttribute("aria-hidden", "true");
+    });
+
+    map.on("mousemove", "ro-municipalities-fill", event => {
+      const feature = event.features?.[0];
+      if (!feature) return;
+
+      const properties = feature.properties ?? {};
+      const value = Number(properties.value ?? 0);
+
+      if (!Number.isFinite(value) || value <= 0) {
+        map.getCanvas().style.cursor = "";
+        mapTooltip.style.display = "none";
+        mapTooltip.setAttribute("aria-hidden", "true");
+        return;
+      }
+
+      map.getCanvas().style.cursor = "pointer";
+      mapTooltip.style.display = "block";
+      mapTooltip.setAttribute("aria-hidden", "false");
+      mapTooltipState.textContent = properties.display_name ?? "Municipality";
+      mapTooltipValue.textContent = formatStateValue.format(value);
+      mapTooltipSuffix.textContent = value === 1 ? "record" : "records";
+      positionMapTooltip(event);
+    });
+
+    map.on("mouseleave", "ro-municipalities-fill", () => {
+      map.getCanvas().style.cursor = "";
+      mapTooltip.style.display = "none";
+      mapTooltip.setAttribute("aria-hidden", "true");
+    });
+
+    map.on("mousemove", "sp-municipalities-fill", event => {
+  const feature = event.features?.[0];
+  if (!feature) return;
+
+  const properties = feature.properties ?? {};
+  const value = Number(properties.value ?? 0);
+
+  if (!Number.isFinite(value) || value <= 0) {
+    map.getCanvas().style.cursor = "";
+    mapTooltip.style.display = "none";
+    mapTooltip.setAttribute("aria-hidden", "true");
+    return;
+  }
+
+  map.getCanvas().style.cursor = "pointer";
+  mapTooltip.style.display = "block";
+  mapTooltip.setAttribute("aria-hidden", "false");
+  mapTooltipState.textContent = properties.name ?? "Municipality";
+  mapTooltipValue.textContent = formatStateValue.format(value);
+  mapTooltipSuffix.textContent = value === 1 ? "record" : "records";
+
+  positionMapTooltip(event);
+});
+
+    map.on("mouseleave", "sp-municipalities-fill", () => {
+      map.getCanvas().style.cursor = "";
+      mapTooltip.style.display = "none";
+      mapTooltip.setAttribute("aria-hidden", "true");
+    });
+
+
+    const municipalityValues = municipalitiesGeoJSON.features
+      .map(feature => Number(feature.properties.value))
+      .filter(value => Number.isFinite(value) && value > 0);
+
+    const municipalityMax = d3.max(municipalityValues) ?? 1;
+
+    addGeoJSONSourceAndLayers({
+      sourceId: "sp-municipalities",
+      geojson: municipalitiesGeoJSON,
+      fillLayerId: "sp-municipalities-fill",
+      lineLayerId: "sp-municipalities-outline",
+      fillColor: createLogColorExpression(municipalityMax),
+      fillOpacity: 0.8,
+      lineColor: "#070708",
+      lineWidth: 0.65
+    });
+
+    map.addSource("sp-state-boundary", {
+      type: "geojson",
+      data: spStateGeoJSON
+    });
+
+    map.addLayer({
+      id: "sp-state-boundary-outline",
+      type: "line",
+      source: "sp-state-boundary",
+      layout: {
+        visibility: "none",
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      paint: {
+        "line-color": "#f4f1ea",
+        "line-width": 3,
+        "line-opacity": 1
+      }
+    });
+
+    const districtValues = cityGeoJSON.features
+      .map(feature => Number(feature.properties.value))
+      .filter(value => Number.isFinite(value) && value > 0);
+
+    const districtMax = d3.max(districtValues) ?? 1;
+
+    addGeoJSONSourceAndLayers({
+      sourceId: "sp-city",
+      geojson: cityGeoJSON,
+      fillLayerId: "sp-city-fill",
+      lineLayerId: "sp-city-outline",
+      fillColor: createLogColorExpression(districtMax, "#444444"),
+      fillOpacity: 0.8,
+      lineColor: "#111111",
+      lineWidth: 1.2
+    });
+
+    /* São Paulo district tooltip */
+    map.on("mousemove", "sp-city-fill", event => {
+      const feature = event.features?.[0];
+  if (!feature) return;
+
+  const properties = feature.properties ?? {};
+  const value = Number(properties.value ?? 0);
+
+  if (!Number.isFinite(value) || value <= 0) {
+    map.getCanvas().style.cursor = "";
+    mapTooltip.style.display = "none";
+    mapTooltip.setAttribute("aria-hidden", "true");
+    return;
+  }
+
+  map.getCanvas().style.cursor = "pointer";
+  mapTooltip.style.display = "block";
+  mapTooltip.setAttribute("aria-hidden", "false");
+  mapTooltipState.textContent = formatDistrictName(properties.ds_nome);
+  mapTooltipValue.textContent = formatStateValue.format(value);
+  mapTooltipSuffix.textContent = value === 1 ? "record" : "records";
+
+  positionMapTooltip(event);
+});
+
+    map.on("mouseleave", "sp-city-fill", () => {
+      map.getCanvas().style.cursor = "";
+      mapTooltip.style.display = "none";
+      mapTooltip.setAttribute("aria-hidden", "true");
+    });
+
+    map.addSource("sp-city-boundary", {
+      type: "geojson",
+      data: cityBoundaryGeoJSON
+    });
+
+    map.addLayer({
+      id: "sp-city-boundary-outline",
+      type: "line",
+      source: "sp-city-boundary",
+      layout: {
+        visibility: "none",
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      paint: {
+        "line-color": "#f4f1ea",
+        "line-width": 3,
+        "line-opacity": 1
+      }
+    });
+
+    mapIsReady = true;
+
+    /* First rendered frame: actual Brazil geometry, never the globe. */
+    setActiveChapter("brasil", true);
+    updateScrolly();
+
+    console.info("Loaded GeoJSON files:", {
+      brazil: brazilData.path,
+      brazilBoundary: brazilBoundaryData.path,
+      rondonia: rondoniaData.path,
+      municipalities: spData.path,
+      city: capitalData.path,
+      spState: spStateData.path,
+      cityBoundary: cityBoundaryData.path
+    });
+  } catch (error) {
+    showMapError(
+      `The GeoJSON layers could not be loaded. Keep the files beside <strong>index.html</strong> and check the filenames in <strong>GEOJSON_FILES</strong> at the start of the script.<br><br>${error.message}`
+    );
+  }
+});
+
+window.addEventListener("scroll", updateScrolly, { passive: true });
+window.addEventListener("resize", updateScrolly);
+</script>
+
+</body>
+</html>
