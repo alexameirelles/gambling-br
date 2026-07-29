@@ -2,7 +2,7 @@
 
 **Project 3 for the Lede Program in Data Journalism at Columbia University**
 
-🔗 **Live project: *https://alexameirelles.github.io/gambling-br/*
+🔗 **Live project**: *https://alexameirelles.github.io/gambling-br/*
 
 A data-driven story exploring outpatient visits related to gambling and betting disorders in Brazil between **2015 and 2025**, using data from Brazil's public healthcare system (SUS).
 
@@ -96,11 +96,11 @@ The analysis was conducted in Python using **pandas**.
 
 The work focused primarily on:
 
-- temporal trends
-- geographic distribution
-- outpatient visits versus hospitalizations
-- municipality-level aggregation
-- district-level aggregation
+- Temporal trends
+- Geographic distribution
+- Outpatient visits versus hospitalizations
+- Municipality-level aggregation
+- District-level aggregation
 
 Intermediate datasets were exported as CSV files for use in the interactive visualizations.
 
@@ -110,11 +110,11 @@ Intermediate datasets were exported as CSV files for use in the interactive visu
 
 The final story combines several custom visualizations built with **D3.js** and **Mapbox GL JS**, including:
 
-- animated line chart
-- waffle chart
-- scrollytelling maps
-- choropleth maps at multiple geographic levels
-- animated transitions between maps
+- Animated line chart
+- Waffle chart
+- Scrollytelling maps
+- Choropleth maps at multiple geographic levels
+- Animated transitions between maps
 
 ---
 
@@ -135,14 +135,14 @@ This project allowed me to deepen my experience working with healthcare microdat
 
 Throughout the project, I learned how to:
 
-- query large healthcare datasets using SQL and Base dos Dados
-- build multi-step scrollytelling experiences with Mapbox GL JS
-- coordinate D3.js and Mapbox visualizations
-- geocode healthcare facilities using ViaCEP and Nominatim
-- perform spatial joins with GeoPandas
-- convert Shapefiles to GeoJSON using Mapshaper
-- design choropleth maps at multiple geographic scales
-- improve map styling, transitions, and storytelling through JavaScript
+- Query large healthcare datasets using SQL and Base dos Dados
+- Build multi-step scrollytelling experiences with Mapbox GL JS
+- Coordinate D3.js and Mapbox visualizations
+- Geocode healthcare facilities using ViaCEP and Nominatim
+- Perform spatial joins with GeoPandas
+- Convert Shapefiles to GeoJSON using Mapshaper
+- Design choropleth maps at multiple geographic scales
+- Improve map styling, transitions, and storytelling through JavaScript
 
 The official documentation for Mapbox GL JS, GeoPandas, D3.js, pandas, and Base dos Dados served as my primary references throughout development.
 
@@ -154,12 +154,12 @@ AI-assisted explanations also played an important role, particularly while build
 
 Given more time, I would like to:
 
-- incorporate interviews with psychiatrists, addiction specialists, and patients
-- expand the analysis using additional mental health datasets
-- investigate regional differences in access to specialized treatment
-- improve the mobile experience
-- further enhance accessibility for screen readers and keyboard navigation
-- update the project as new healthcare records become available
+- Incorporate interviews with psychiatrists, addiction specialists, and patients
+- Expand the analysis using additional mental health datasets
+- Investigate regional differences in access to specialized treatment
+- Improve the mobile experience
+- Further enhance accessibility for screen readers and keyboard navigation
+- Update the project as new healthcare records become available
 
 ---
 
