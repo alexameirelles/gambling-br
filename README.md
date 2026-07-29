@@ -2,7 +2,7 @@
 
 **Project 3 for the Lede Program in Data Journalism at Columbia University**
 
-🔗 **Live project:** *(GitHub Pages URL)*
+🔗 **Live project: *https://alexameirelles.github.io/gambling-br/*
 
 A data-driven story exploring outpatient visits related to gambling and betting disorders in Brazil between **2015 and 2025**, using data from Brazil's public healthcare system (SUS).
 
