@@ -566,6 +566,17 @@ footer {
 }
 
 
+
+#body-text .disclaimer{
+  margin: 0 0 2.5rem;
+  padding: 0.9rem 0 0.9rem 1rem;
+  border-left: 4px solid #c96a10;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: white;
+  font-style: italic;
+}
+
 </style>
 
 </head>
@@ -600,6 +611,11 @@ footer {
 </section>
 
 <section id="body-text">
+
+<p class="disclaimer">
+  Disclaimer: This project was created as part of the Lede Program, Columbia University's data journalism program, for educational purposes only — it is not a finished piece of journalism.<br>
+  It has not yet undergone full fact-checking or expert review.
+</p>
 
 <p class="intro">The 2026 World Cup has barely ended, and the tournament already leaves plenty to talk about. Between political undercurrents, controversial decisions, and a competition played under heavy international tension, it became a topic of conversation far beyond the pitch. In Brazil, what also grabbed attention was the role betting companies played throughout the entire competition and in the broadcast of the matches.</p>
 
@@ -2880,7 +2896,7 @@ console.table(
       },
       paint: {
         "line-color": "#f4f1ea",
-        "line-width": 3,
+        "line-width": 4,
         "line-opacity": 1
       }
     });
